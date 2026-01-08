@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Receipt - Pradeep Furniture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a2236;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #receipt {
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 15px;
+            width: 350px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .balance {
+            color: #d91b1b;
+            font-weight: bold;
+            font-size: 22px;
+        }
+
+        .btn {
+            background: #25d366;
+            color: white;
+            padding: 15px;
+            width: 350px;
+            border-radius: 10px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="receipt">
+        <h2 style="text-align:center; margin:0;">PRADEEP FURNITURE</h2>
+        <p style="text-align:center; color:#666;">Date: {{ bill.date }}</p>
+        <hr>
+        <div class="row"><span>Customer:</span> <span class="bold">{{ bill.name }}</span></div>
+        <div class="row"><span>Mobile:</span> <span class="bold">{{ bill.mobile }}</span></div>
+        <hr style="border: 0.5px solid #eee;">
+        <div class="row"><span>Windows ({{ bill.windows }}x{{ bill.w_rate }}):</span> <span>₹{{ bill.w_price }}</span>
+        </div>
+        <div class="row"><span>Doors ({{ bill.doors }}x{{ bill.d_rate }}):</span> <span>₹{{ bill.d_price }}</span></div>
+        <div class="row bold" style="border-top:2px solid #333; padding-top:10px;"><span>Grand Total:</span> <span>₹{{
+                bill.total }}</span></div>
+        <div class="row" style="color:green; font-weight:bold;"><span>Advance Paid:</span> <span>- ₹{{ bill.advance
+                }}</span></div>
+        <div class="row balance"><span>BALANCE LEFT:</span> <span>₹{{ bill.left }}</span></div>
+    </div>
+
+    <button class="btn" onclick="generate()">DOWNLOAD & WHATSAPP</button>
+
+    <script>
+        function generate() {
+            const element = document.getElementById('receipt');
+            // WhatsApp message format
+            const msg = `*PRADEEP FURNITURE - INVOICE*%0A` +
+                `------------------------------------------%0A` +
+                `*Date:* {{ bill.date }}%0A` +
+                `*Customer:* {{ bill.name }}%0A` +
+                `------------------------------------------%0A` +
+                `*Windows:* {{ bill.windows }} x {{ bill.w_rate }} = *₹{{ bill.w_price }}*%0A` +
+                `*Doors:* {{ bill.doors }} x {{ bill.d_rate }} = *₹{{ bill.d_price }}*%0A` +
+                `------------------------------------------%0A` +
+                `*Grand Total:* *₹{{ bill.total }}*%0A` +
+                `*Advance Paid:* *₹{{ bill.advance }}*%0A` +
+                `*BALANCE LEFT:* *₹{{ bill.left }}*%0A` +
+                `------------------------------------------%0A` +
+                `_Thank you for choosing Pradeep Furniture!_`;
+
+            html2canvas(element, { scale: 3 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Receipt_{{ bill.name }}.png`;
+                link.href = canvas.toDataURL();
+                link.click(); // Image download
+
+                setTimeout(() => {
+                    window.location.href = `https://wa.me/91{{ bill.mobile }}?text=${msg}`;
+                }, 1000);
+            });
+        }
+    </script>
+</body>
+
+</html>
