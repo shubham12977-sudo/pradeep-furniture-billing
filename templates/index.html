@@ -5,8 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PRADEEP FURNITURE</title>
+
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+
     <style>
         :root {
             --primary: #2563eb;
@@ -51,10 +53,8 @@
             font-size: 14px;
         }
 
-        /* Red Asterisk Style */
         .required-star {
             color: #ef4444;
-            /* Bright Red */
             font-weight: bold;
             margin-left: 2px;
         }
@@ -73,11 +73,6 @@
             display: flex;
             gap: 15px;
             margin-bottom: 15px;
-        }
-
-        .row-group .input-group {
-            flex: 1;
-            margin-bottom: 0;
         }
 
         button {
@@ -111,45 +106,67 @@
 <body>
     <div class="container">
         <h2>ग्राहक विवरण दर्ज करें</h2>
-        <form action="/submit" method="POST">
-            <div class="input-group"><label>दिनांक <span class="required-star">*</span></label>
+
+        <!-- ✅ SAFE FORM -->
+        <form action="/submit" method="POST" onsubmit="return validateForm()">
+
+            <!-- hidden safeguard (direct submit block) -->
+            <input type="hidden" name="from_form" value="yes">
+
+            <div class="input-group">
+                <label>दिनांक <span class="required-star">*</span></label>
                 <input type="date" name="field1" required>
             </div>
 
-            <div class="input-group"><label>ग्राहक का नाम <span class="required-star">*</span></label>
+            <div class="input-group">
+                <label>ग्राहक का नाम <span class="required-star">*</span></label>
                 <input type="text" name="field2" placeholder="पूरा नाम" required>
             </div>
 
             <div class="row-group">
-                <div class="input-group"><label>खिड़की संख्या <span class="required-star">*</span></label>
+                <div class="input-group">
+                    <label>खिड़की संख्या <span class="required-star">*</span></label>
                     <input type="number" name="w_qty" placeholder="Qty" required>
                 </div>
-                <div class="input-group"><label>रेट (₹) <span class="required-star">*</span></label>
+                <div class="input-group">
+                    <label>रेट (₹) <span class="required-star">*</span></label>
                     <input type="number" name="w_rate" placeholder="Rate" required>
                 </div>
             </div>
 
             <div class="row-group">
-                <div class="input-group"><label>दरवाजा संख्या <span class="required-star">*</span></label>
+                <div class="input-group">
+                    <label>दरवाजा संख्या <span class="required-star">*</span></label>
                     <input type="number" name="d_qty" placeholder="Qty" required>
                 </div>
-                <div class="input-group"><label>रेट (₹) <span class="required-star">*</span></label>
+                <div class="input-group">
+                    <label>रेट (₹) <span class="required-star">*</span></label>
                     <input type="number" name="d_rate" placeholder="Rate" required>
                 </div>
             </div>
 
-            <div class="input-group"><label>Advance Amount (जमा राशि)</label>
-                <input type="number" name="field_adv" placeholder="₹ 0" value="0">
+            <div class="input-group">
+                <label>Advance Amount (जमा राशि)</label>
+                <input type="number" name="field_adv" value="0">
             </div>
 
-            <div class="input-group"><label>मोबाइल नंबर <span class="required-star">*</span></label>
+            <div class="input-group">
+                <label>मोबाइल नंबर <span class="required-star">*</span></label>
                 <input type="number" name="field5" placeholder="10 अंकों का नंबर" required>
             </div>
 
             <button type="submit">SAVE & GENERATE BILL</button>
         </form>
+
         <div class="footer-text">Proudly developed by Shubham Developer</div>
     </div>
+
+    <!-- ✅ JS VALIDATION -->
+    <script>
+        function validateForm() {
+            return true; // future validation ready
+        }
+    </script>
 </body>
 
 </html>
