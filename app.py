@@ -1,3 +1,8 @@
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+EXCEL_FILE = os.path.join(BASE_DIR, "pradeepfurnitureentry.xlsx")
+
 from flask import Flask, render_template, request
 import pandas as pd
 import os
@@ -5,10 +10,13 @@ import os
 app = Flask(__name__)
 EXCEL_FILE = 'pradeepfurnitureentry.xlsx'
 
-@app.route('/')
+@app.route('/', methods=['GET', 'HEAD'])
 def index():
-    # Yeh function main form (index.html) ko load karega
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        return f"Template Error: {e}", 500
+
 
 @app.route('/submit', methods=['POST'])
 def submit():
