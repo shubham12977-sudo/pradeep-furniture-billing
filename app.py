@@ -1,101 +1,86 @@
-from flask import Flask, render_template, request
+from flask import Flask, request, send_file, render_template_string
+import sqlite3
 import pandas as pd
+from datetime import datetime
 import os
 
 app = Flask(__name__)
 
-# ===============================
-# Excel file path (Render-safe)
-# ===============================
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-EXCEL_FILE = os.path.join(BASE_DIR, "pradeepfurnitureentry.xlsx")
+# Database Setup
+def init_db():
+    conn = sqlite3.connect('pradeep_furniture.db')
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS bills 
+                      (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                       customer_name TEXT, 
+                       mobile TEXT, 
+                       total REAL, 
+                       advance REAL, 
+                       balance REAL, 
+                       date TEXT)''')
+    conn.commit()
+    conn.close()
 
+init_db()
 
-# ===============================
-# Home Page
-# ===============================
-@app.route("/", methods=["GET", "HEAD"])
-def index():
-    try:
-        return render_template("index.html")
-    except Exception as e:
-        return f"Template Error: {e}", 500
+# HTML Template (Screenshot jaisa look)
+html_template = """
+<!DOCTYPE html>
+<html>
+<body style="background-color: #1a202c; color: white; font-family: sans-serif; text-align: center;">
+    <div style="background: white; color: black; width: 400px; margin: 50px auto; padding: 20px; border-radius: 10px;">
+        <h2>PRADEEP FURNITURE</h2>
+        <p>Date: {{ date }}</p>
+        <hr>
+        <p align="left">Customer: <b>{{ name }}</b></p>
+        <p align="left">Mobile: <b>{{ mobile }}</b></p>
+        <hr>
+        <h3 style="color: green;">Grand Total: ₹{{ total }}</h3>
+        <h3 style="color: orange;">Advance Paid: -₹{{ advance }}</h3>
+        <h2 style="color: red;">BALANCE LEFT: ₹{{ balance }}</h2>
+        <a href="/download_excel" style="background: #2ecc71; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">DOWNLOAD EXCEL</a>
+    </div>
+</body>
+</html>
+"""
 
-
-# ===============================
-# Form Submit
-# ===============================
-@app.route("/submit", methods=["POST"])
+@app.route('/submit', methods=['POST', 'GET'])
 def submit():
-    try:
-        # ---- Form data ----
-        date_val = request.form.get("field1")
-        name_val = request.form.get("field2")
-        mobile_val = request.form.get("field5")
+    # Example data (Inhe aap form se request.form.get() karke le sakte hain)
+    data = {
+        "name": "bablu bhai",
+        "mobile": "9528836338",
+        "total": 11400,
+        "advance": 1200,
+        "date": datetime.now().strftime("%Y-%m-%d")
+    }
+    balance = data['total'] - data['advance']
 
-        w_count = int(request.form.get("w_qty") or 0)
-        w_rate = int(request.form.get("w_rate") or 0)
-        d_count = int(request.form.get("d_qty") or 0)
-        d_rate = int(request.form.get("d_rate") or 0)
-        advance_paid = int(request.form.get("field_adv") or 0)
+    # 1. Database mein save karein
+    conn = sqlite3.connect('pradeep_furniture.db')
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO bills (customer_name, mobile, total, advance, balance, date) VALUES (?, ?, ?, ?, ?, ?)",
+                   (data['name'], data['mobile'], data['total'], data['advance'], balance, data['date']))
+    conn.commit()
+    conn.close()
 
-        # ---- Calculations ----
-        w_total = w_count * w_rate
-        d_total = d_count * d_rate
-        grand_total = w_total + d_total
-        left_amount = grand_total - advance_paid
+    # 2. Excel File Update Karein
+    df = pd.DataFrame([data])
+    df['balance'] = balance
+    excel_file = 'billing_data.xlsx'
+    
+    if not os.path.isfile(excel_file):
+        df.to_excel(excel_file, index=False)
+    else:
+        with pd.ExcelWriter(excel_file, mode='a', engine='openpyxl', if_sheet_exists='overlay') as writer:
+            df.to_excel(writer, index=False, header=False, startrow=writer.sheets['Sheet1'].max_row)
 
-        # ---- Excel row ----
-        new_row = {
-            "Date": [date_val],
-            "Customer Name": [name_val],
-            "Windows (Qty)": [w_count],
-            "Window Rate": [w_rate],
-            "Doors (Qty)": [d_count],
-            "Door Rate": [d_rate],
-            "Total Bill (₹)": [grand_total],
-            "Advance Paid (₹)": [advance_paid],
-            "Amount Left (₹)": [left_amount],
-            "Mobile Number": [mobile_val]
-        }
+    return render_template_string(html_template, name=data['name'], mobile=data['mobile'], total=data['total'], advance=data['advance'], balance=balance, date=data['date'])
 
-        df_new = pd.DataFrame(new_row)
+@app.route('/download_excel')
+def download_excel():
+    return send_file('billing_data.xlsx', as_attachment=True)
 
-        # ---- Save / Append Excel ----
-        if os.path.exists(EXCEL_FILE):
-            df_old = pd.read_excel(EXCEL_FILE)
-            df_final = pd.concat([df_old, df_new], ignore_index=True)
-        else:
-            df_final = df_new
-
-        df_final.to_excel(EXCEL_FILE, index=False)
-        print("✅ Excel saved at:", EXCEL_FILE)
-
-        # ---- Receipt data ----
-        bill_details = {
-            "date": date_val,
-            "name": name_val,
-            "mobile": mobile_val,
-            "windows": w_count,
-            "w_rate": w_rate,
-            "w_price": w_total,
-            "doors": d_count,
-            "d_rate": d_rate,
-            "d_price": d_total,
-            "total": grand_total,
-            "advance": advance_paid,
-            "left": left_amount
-        }
-
-        return render_template("success.html", bill=bill_details)
-
-    except Exception as e:
-        print("❌ ERROR:", e)
-        return f"Server Error: {e}", 500
-
-
-# ===============================
-# App Runner (Local only)
-# ===============================
-if __name__ == "__main__":
+if __name__ == '__main__':
+    print("Developed by: Shubham Developer")
     app.run(debug=True)
